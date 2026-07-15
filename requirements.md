@@ -25,19 +25,43 @@ GitHub Actions (毎日 cron トリガー。PCの電源状態に無関係にク�
   │     - メタデータ: archive/index.json に日付・採用記事リスト・不採用記事リスト・
   │       採用/不採用の理由を追記していく(蓄積してfew-shotや傾向分析に使う)
   │
-  └─ 4. Discord Webhook で完成通知(台本ファイルへのリンク付き)
+  └─ 4. Discord Webhook で完成通知(Botではなく単純なWebhook。
+        「今日の台本できたよ」+ archiveファイルのGitHub URLのみを送る)
 ```
+
+## 深掘りフロー(Claude.ai Pro Project経由)
+
+Discord BotでAPIを直接叩く方式は不採用。理由は、API経由の会話とClaude.ai(Pro)の会話は
+別システムで記憶が連携しないため。代わりに以下のフローにする。
+
+```
+Discord通知(URLのみ) をiPhoneで見る
+  → Claude.aiアプリの専用Project「tech radio」を開く
+  → 「今日の台本読んで、○番目の記事を深掘りして」と話しかける
+  → ClaudeがGitHubのarchiveファイルURLをfetchして読み込み、回答する
+```
+
+- API課金は発生しない(Pro/Maxの定額範囲内)
+- PCの起動状態に依存しない(Remote Controlのような制約なし)
+- Project Instructionsに以下を登録しておく:
+  - archiveリポジトリのURLパターン(`https://github.com/<user>/tech-radio/blob/main/archive/{日付}.md`)
+  - プロジェクトの背景・選別基準の要約
+  - これにより「今日の台本」と言うだけでClaudeが日付からURLを組み立てて読みに行ける
+- 会話はすべてこのProject内に蓄積されるため、過去の深掘りの続きも自然に繋がる
+- Remote Control(iPhoneからPCのClaude Codeセッションに接続する公式機能)は、
+  このプロジェクトの本筋には使わない。がっつりコード修正したい時のみのオプション
 
 ## 決定事項
 
 | 項目 | 内容 |
 |---|---|
 | 実行基盤 | GitHub Actions(scheduled workflow)。Claude CodeのセッションスコープなcronやDesktopのスケジュールタスクはPC依存のため不採用 |
-| 通知 | Discord Webhook(LINE Notifyは2025年3月末で終了済みのため不採用) |
+| 通知 | Discord Webhook(Botなし、URL通知のみ。LINE Notifyは2025年3月末で終了済みのため不採用) |
 | モデル | Claude Sonnet 5(claude-sonnet-5) |
-| 想定コスト | 1回あたり約$0.11、毎日実行で月$3〜4程度(500円以下) |
+| 想定コスト | 台本生成: 1回あたり約$0.11、毎日実行で月$3〜4程度(500円以下)。深掘りはClaude.ai Pro定額内でAPI課金なし |
 | 記事ソース | Zenn/Qiitaの go・aws・ai タグ、各分野の公式ブログRSS |
 | 台本保存先 | GitHubリポジトリの archive/ ディレクトリにコミット(履歴として蓄積) |
+| 深掘り手段 | Claude.aiアプリ(Pro)の専用Project「tech radio」経由。Discord Bot/API直叩きは不採用(記憶が分断されるため) |
 
 ## 改善サイクルの設計(重要)
 
@@ -56,3 +80,5 @@ GitHub Actions (毎日 cron トリガー。PCの電源状態に無関係にク�
 - Claude APIへのプロンプト設計(選別基準・台本フォーマット・出力JSON構造)
 - Discord Webhook URLの取得・GitHub Secretsへの登録
 - archive/index.json のスキーマ設計
+- Claude.aiにProject「tech radio」を作成し、Project Instructionsに
+  archiveリポジトリのURLパターンと選別基準を登録する
