@@ -1,5 +1,5 @@
-// Package zenn はZennのトピック別フィードから記事を収集する。
-package zenn
+// Package aws はAWS News Blogのフィードから記事を収集する。
+package aws
 
 import (
 	"context"
@@ -10,7 +10,10 @@ import (
 	"my-tech-radio/rss"
 )
 
-const sourceName = "zenn"
+const (
+	sourceName = "aws"
+	feedURL    = "https://aws.amazon.com/blogs/aws/feed/"
+)
 
 func NewClient(client *http.Client) *Client {
 	return &Client{client}
@@ -20,11 +23,9 @@ type Client struct {
 	*http.Client
 }
 
-// FetchFeeds はトピックのフィードを取得して記事一覧を返す。
-func (c *Client) FetchFeeds(ctx context.Context, topic string) ([]rss.Feed, error) {
-	url := fmt.Sprintf("https://zenn.dev/topics/%s/feed", topic)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// FetchFeeds はAWS News Blogのフィードを取得して記事一覧を返す。
+func (c *Client) FetchFeeds(ctx context.Context) ([]rss.Feed, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
