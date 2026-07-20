@@ -1,0 +1,5 @@
+# 収集の中間生成物。台本は archive/ にコミットするが、これは残さない
+/candidates.json
+
+# ビルド成果物
+/my-tech-radio
